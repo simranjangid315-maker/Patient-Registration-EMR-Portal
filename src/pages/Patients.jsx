@@ -9,31 +9,47 @@ export default function Patients() {
   const [appointments, setAppointments] = useState([]);
   const [search, setSearch] = useState("");
 
-  //  Fetch patients and appointments
+  // Fetch patients and appointments
   const fetchData = async () => {
-    const resPatients = await API.get("/patients");
-    setPatients(resPatients.data);
+    try {
+      const resPatients = await API.get("/patients");
+      setPatients(resPatients.data);
 
-    const resAppointments = await API.get("/appointments");
-    setAppointments(resAppointments.data);
+      const resAppointments = await API.get("/appointments");
+      setAppointments(resAppointments.data);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+    }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  //  Delete patient
+  // Delete patient
   const deletePatient = async (id) => {
     if (!window.confirm("Delete this patient?")) return;
-    await API.delete(`/patients/${id}`);
-    fetchData();
+    try {
+      await API.delete(`/patients/${id}`);
+      alert("Patient deleted successfully");
+      fetchData();
+    } catch (err) {
+      console.error("Error deleting patient:", err);
+      alert("Failed to delete patient");
+    }
   };
 
-  //  Cancel appointment
+  // Cancel appointment
   const cancelAppointment = async (id) => {
     if (!window.confirm("Cancel this appointment?")) return;
-    await API.delete(`/appointments/${id}`);
-    fetchData();
+    try {
+      await API.delete(`/appointments/${id}`);
+      alert("Appointment cancelled successfully");
+      fetchData(); // refresh both patients + appointments
+    } catch (err) {
+      console.error("Error cancelling appointment:", err);
+      alert("Failed to cancel appointment");
+    }
   };
 
   const filteredPatients = patients.filter((p) =>
@@ -44,6 +60,7 @@ export default function Patients() {
     <>
       <Navbar />
       <div className="p-8 bg-[#1a1a2e] min-h-screen text-white">
+        {/* Patients List */}
         <h1 className="text-3xl font-bold mb-6 text-purple-400">Patients List</h1>
 
         <input
@@ -53,7 +70,6 @@ export default function Patients() {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        {/* Patients Table */}
         <div className="bg-[#2e2e4f] shadow-lg rounded-xl overflow-hidden mb-10">
           <table className="w-full text-left border-collapse">
             <thead className="bg-purple-700 text-white">
@@ -88,7 +104,7 @@ export default function Patients() {
           </table>
         </div>
 
-        {/* Appointments Table */}
+        {/* Appointments List */}
         <h1 className="text-3xl font-bold mb-6 text-purple-400">Appointments List</h1>
         <div className="bg-[#2e2e4f] shadow-lg rounded-xl overflow-hidden">
           <table className="w-full text-left border-collapse">
@@ -99,6 +115,8 @@ export default function Patients() {
                 <th>Day</th>
                 <th>Time</th>
                 <th>Reason</th>
+                <th>Phone</th>   {/* New */}
+                <th>Email</th>   {/* New */}
                 <th>Action</th>
               </tr>
             </thead>
@@ -114,6 +132,8 @@ export default function Patients() {
                     <td>{dayName}</td>
                     <td>{a.time}</td>
                     <td>{a.reason}</td>
+                    <td>{a.phone}</td>   {/* New */}
+                    <td>{a.email}</td>   {/* New */}
                     <td>
                       <button
                         className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
