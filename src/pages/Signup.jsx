@@ -8,7 +8,8 @@ export default function Signup() {
   const [form, setForm] = useState({
     fullname: "",
     email: "",
-    password: ""
+    password: "",
+    role: "patient"   //  default to patient
   });
 
   const handleChange = (e) => {
@@ -26,7 +27,7 @@ export default function Signup() {
       alert("Registration Successful");
       navigate("/login");
     } catch (err) {
-      console.log(err);
+      console.error("Registration error:", err);
       alert(err.response?.data?.message || "Registration Failed");
     }
   };
@@ -43,25 +44,42 @@ export default function Signup() {
             type="text"
             name="fullname"
             placeholder="Full Name"
+            value={form.fullname}
             onChange={handleChange}
             className="w-full p-3 mb-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
 
           <input
             type="email"
             name="email"
             placeholder="Email"
+            value={form.email}
             onChange={handleChange}
             className="w-full p-3 mb-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
 
           <input
             type="password"
             name="password"
             placeholder="Password"
+            value={form.password}
             onChange={handleChange}
             className="w-full p-3 mb-4 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
+
+          {/* Role Dropdown */}
+          <select
+            name="role"
+            value={form.role}
+            onChange={handleChange}
+            className="w-full p-3 mb-4 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="patient">Patient</option>
+            <option value="admin">Admin</option>
+          </select>
 
           <button className="bg-purple-600 hover:bg-purple-700 text-white w-full p-3 rounded">
             Create Account
