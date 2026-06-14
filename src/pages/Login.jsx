@@ -22,11 +22,21 @@ export default function Login() {
 
     try {
       const res = await API.post("/auth/login", form);
+
+      // ✅ Store token, fullname, email, and role
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("fullname", res.data.fullname);
+      localStorage.setItem("patientEmail", res.data.email); // fixed: use res.data
+      localStorage.setItem("role", res.data.role);
 
       alert("Login Successful");
-      navigate("/home");
+
+      // ✅ Role-based redirect
+      if (res.data.role === "admin") {
+        navigate("/home");
+      } else {
+        navigate("/my-appointments");
+      }
     } catch (err) {
       console.error("Login error:", err);
       alert(err.response?.data?.message || "Login Failed");
