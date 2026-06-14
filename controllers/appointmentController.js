@@ -1,17 +1,23 @@
 import db from "../db.js";
 
-// ✅ Add Appointment
+// Add Appointment
 export const addAppointment = async (req, res) => {
   try {
-    const { patientName, date, time, reason } = req.body;
+    const { patientName, phone, email, date, time, reason } = req.body;
 
-    // Debug log to confirm frontend sends correct format
-    console.log("Received appointment:", { patientName, date, time, reason });
+    // Check for duplicate slot
+    const [existing] = await db.query(
+      "SELECT * FROM appointments WHERE date = ? AND time = ?",
+      [date, time]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "This slot is already taken." });
+    }
 
-    // Insert into MySQL (expects TIME in HH:MM:SS)
+    // Insert new appointment
     await db.query(
-      "INSERT INTO appointments (patientName, date, time, reason) VALUES (?, ?, ?, ?)",
-      [patientName, date, time, reason]
+      "INSERT INTO appointments (patientName, phone, email, date, time, reason) VALUES (?, ?, ?, ?, ?, ?)",
+      [patientName, phone, email, date, time, reason]
     );
 
     res.status(201).json({ message: "Appointment added successfully" });
@@ -21,10 +27,12 @@ export const addAppointment = async (req, res) => {
   }
 };
 
-// ✅ Get All Appointments
+// Get All Appointments
 export const getAppointments = async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM appointments ORDER BY date, time");
+    const [rows] = await db.query(
+      "SELECT id, patientName, date, time, reason, phone, email FROM appointments ORDER BY date, time"
+    );
     res.json(rows);
   } catch (err) {
     console.error("Error fetching appointments:", err);
@@ -32,7 +40,8 @@ export const getAppointments = async (req, res) => {
   }
 };
 
-// ✅ Cancel Appointment
+
+// Cancel Appointment
 export const cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
