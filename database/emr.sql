@@ -1,5 +1,5 @@
-CREATE DATABASE emr_portal;
-USE emr_portal;
+CREATE DATABASE `Patient Registration & EMR Portal`;
+USE `Patient Registration & EMR Portal`;
 
 CREATE TABLE users(
   id INT AUTO_INCREMENT PRIMARY KEY,
