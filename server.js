@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//  Database connection (use pool, not top-level await)
+// Database connection (use pool, not top-level await)
 const db = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -20,10 +20,10 @@ const db = mysql.createPool({
   database: process.env.DB_NAME || "emr_portal",
 });
 
-//  Register route
+// Register route
 app.post("/auth/register", async (req, res) => {
   try {
-    const { fullname, email, password } = req.body;
+    const { fullname, email, password, role } = req.body;
     if (!fullname || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -35,8 +35,8 @@ app.post("/auth/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
-      "INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)",
-      [fullname, email, hashedPassword]
+      "INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)",
+      [fullname, email, hashedPassword, role || "patient"] // default patient
     );
 
     res.status(201).json({ message: "Registration successful" });
@@ -46,7 +46,7 @@ app.post("/auth/register", async (req, res) => {
   }
 });
 
-//  Login route
+// Login route
 app.post("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -63,19 +63,26 @@ app.post("/auth/login", async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "emr_secret_key",
       { expiresIn: "1h" }
     );
 
-    res.json({ message: "Login successful", fullname: user.fullname, token });
+    res.json({
+  message: "Login successful",
+  fullname: user.fullname,
+  email: user.email,   // add this
+  role: user.role,
+  token
+});
+
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: err.message });
   }
 });
 
-//  Patients routes
+// Patients routes
 app.post("/patients", async (req, res) => {
   try {
     const { fullname, gender, age, bloodgroup, phone, address } = req.body;
@@ -106,17 +113,44 @@ app.get("/patients", async (req, res) => {
   }
 });
 
-//  Appointments routes
+// Delete Patient route
+app.delete("/patients/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query("DELETE FROM patients WHERE id = ?", [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.json({ message: "Patient deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting patient:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Appointments routes
 app.post("/appointments", async (req, res) => {
   try {
-    const { patientName, date, time, reason } = req.body;
-    if (!patientName || !date || !time || !reason) {
+    const { patientName, phone, email, date, time, reason } = req.body;
+    if (!patientName || !phone || !email || !date || !time || !reason) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Check if slot already taken
+    const [existing] = await db.query(
+      "SELECT * FROM appointments WHERE date = ? AND time = ?",
+      [date, time]
+    );
+    if (existing.length > 0) {
+      return res.status(409).json({ message: "This slot is already taken" });
+    }
+
+    // Insert new appointment with phone + email
     await db.query(
-      "INSERT INTO appointments (patientName, date, time, reason) VALUES (?, ?, ?, ?)",
-      [patientName, date, time, reason]
+      "INSERT INTO appointments (patientName, phone, email, date, time, reason) VALUES (?, ?, ?, ?, ?, ?)",
+      [patientName, phone, email, date, time, reason]
     );
 
     res.status(201).json({ message: "Appointment added successfully" });
@@ -125,10 +159,12 @@ app.post("/appointments", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
+//  This is the GET route you asked about
 app.get("/appointments", async (req, res) => {
   try {
-    const [rows] = await db.query("SELECT * FROM appointments ORDER BY date ASC");
+    const [rows] = await db.query(
+      "SELECT id, patientName, phone, email, date, time, reason FROM appointments ORDER BY date ASC"
+    );
     res.json(rows);
   } catch (err) {
     console.error("Error fetching appointments:", err.message);
@@ -136,7 +172,7 @@ app.get("/appointments", async (req, res) => {
   }
 });
 
-//  Cancel Appointment route
+// Cancel Appointment route
 app.delete("/appointments/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -153,7 +189,7 @@ app.delete("/appointments/:id", async (req, res) => {
   }
 });
 
-//  Start server
+// Start server
 app.listen(process.env.PORT || 5001, () =>
   console.log(`Server running on port ${process.env.PORT || 5001}`)
 );
