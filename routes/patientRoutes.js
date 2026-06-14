@@ -24,6 +24,21 @@ router.post("/", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+// DELETE patient by ID
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [result] = await db.query("DELETE FROM patients WHERE id = ?", [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Patient not found" });
+    }
+
+    res.json({ message: "Patient deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 //  Get all patients
 router.get("/", async (req, res) => {
