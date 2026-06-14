@@ -5,7 +5,7 @@ import db from "../db.js";
 // Register
 export const registerUser = async (req, res) => {
   try {
-    const { fullname, email, password } = req.body;
+    const { fullname, email, password, role } = req.body;
     if (!fullname || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -16,8 +16,11 @@ export const registerUser = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.query("INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)", 
-                   [fullname, email, hashedPassword]);
+
+    await db.query(
+      "INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)",
+      [fullname, email, hashedPassword, role || "patient"]
+    );
 
     res.status(201).json({ message: "Registration successful" });
   } catch (err) {
@@ -43,7 +46,7 @@ export const loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET || "emr_secret_key",
       { expiresIn: "1h" }
     );
@@ -51,6 +54,7 @@ export const loginUser = async (req, res) => {
     res.json({
       message: "Login successful",
       fullname: user.fullname,
+      role: user.role,   // critical for frontend redirect
       token
     });
   } catch (err) {
