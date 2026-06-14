@@ -14,18 +14,37 @@ export default function AddPatient() {
     address: ""
   });
 
-  //  Handle input changes
+  const [suggestions, setSuggestions] = useState([]);
+
+  // City list (expand as needed)
+  const cities = [
+    "Hyderabad","Secunderabad","Quthbullapur","Kukatpally","Gachibowli","Miyapur","LB Nagar","Begumpet",
+    "Warangal","Karimnagar","Nizamabad","Khammam","Mahbubnagar","Adilabad","Sangareddy","Medchal","Ranga Reddy",
+    "Vijayawada","Visakhapatnam","Tirupati","Chennai","Bengaluru","Mumbai","Delhi","Kolkata","Pune","Nagpur",
+    "Aurangabad","Coimbatore","Madurai","Lucknow","Kanpur","Agra","Jaipur","Bhopal","Indore","Patna","Ranchi",
+    "Raipur","Chandigarh","Amritsar","Shimla","Dehradun","Noida","Gurgaon"
+  ];
+
+  // Handle input changes
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+
+    if (name === "address") {
+      const filtered = cities.filter((city) =>
+        city.toLowerCase().startsWith(value.toLowerCase())
+      );
+      setSuggestions(filtered);
+    }
   };
 
-  //  Submit form
+  // Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/patients", form); // backend route
+      await API.post("/patients", form);
       alert("Patient Added Successfully");
-      navigate("/patients"); // redirect to Patients list
+      navigate("/patients");
     } catch (err) {
       console.error("Error adding patient:", err);
       alert("Failed to add patient");
@@ -35,12 +54,14 @@ export default function AddPatient() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center p-6 text-white">
-        <div className="bg-[#2e2e4f] shadow-xl rounded-2xl p-8 w-full max-w-lg">
-          <h2 className="text-3xl font-bold mb-6 text-center text-purple-400">
-            Add New Patient
-          </h2>
+      <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 text-white">
+        
+        {/*Heading outside the form card */}
+        <h1 className="text-3xl font-bold mb-6 text-purple-400">
+          Add New Patient
+        </h1>
 
+        <div className="bg-[#2e2e4f] shadow-xl rounded-2xl p-8 w-full max-w-lg">
           <form onSubmit={handleSubmit} className="space-y-4">
             <input
               name="fullname"
@@ -93,14 +114,35 @@ export default function AddPatient() {
               onChange={handleChange}
               required
             />
-            <textarea
-              name="address"
-              placeholder="Address"
-              className="w-full border border-purple-500 p-3 rounded bg-[#1a1a2e] text-white"
-              value={form.address}
-              onChange={handleChange}
-              required
-            />
+
+            {/* Address with city autocomplete */}
+            <div className="relative">
+              <input
+                type="text"
+                name="address"
+                placeholder="Enter City"
+                className="w-full border border-purple-500 p-3 rounded bg-[#1a1a2e] text-white"
+                value={form.address}
+                onChange={handleChange}
+                required
+              />
+              {suggestions.length > 0 && (
+                <ul className="absolute bg-gray-800 text-white w-full rounded mt-1 shadow-lg max-h-40 overflow-y-auto z-10">
+                  {suggestions.map((city, idx) => (
+                    <li
+                      key={idx}
+                      onClick={() => {
+                        setForm({ ...form, address: city });
+                        setSuggestions([]);
+                      }}
+                      className="p-2 hover:bg-purple-600 cursor-pointer"
+                    >
+                      {city}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
             <button
               type="submit"
@@ -110,7 +152,7 @@ export default function AddPatient() {
             </button>
           </form>
 
-          {/*  Back Button */}
+          {/* Back Button */}
           <button
             onClick={() => navigate("/home")}
             className="btn mt-6 w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800"
