@@ -34,7 +34,26 @@ export default function AddAppointment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD
+    const apptDate = new Date(form.date).toLocaleDateString("en-CA");
+
+    // Prevent past dates
+    if (apptDate < today) {
+      alert("❌ You cannot select a past date for an appointment.");
+      return;
+    }
+
     const time24 = convertTo24Hour(form.hour, form.minute, form.meridian);
+
+    // Prevent past times if date is today
+    if (apptDate === today) {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+      if (time24 < currentTime) {
+        alert("❌ You cannot select a past time for today's appointment.");
+        return;
+      }
+    }
 
     const appointmentData = {
       patientName: form.patientName,
