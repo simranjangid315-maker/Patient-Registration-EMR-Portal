@@ -2,17 +2,16 @@ import express from "express";
 import cors from "cors";
 import mysql from "mysql2/promise";
 import dotenv from "dotenv";
-import bcrypt from "bcryptjs";   // bcryptjs works well on Windows
+import bcrypt from "bcryptjs"; // bcryptjs works well on Windows
 import jwt from "jsonwebtoken";
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Database connection (use pool, not top-level await)
+// Database connection (use pool)
 const db = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -36,7 +35,7 @@ app.post("/auth/register", async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
       "INSERT INTO users (fullname, email, password, role) VALUES (?, ?, ?, ?)",
-      [fullname, email, hashedPassword, role || "patient"] // default patient
+      [fullname, email, hashedPassword, role || "patient"]
     );
 
     res.status(201).json({ message: "Registration successful" });
@@ -69,31 +68,29 @@ app.post("/auth/login", async (req, res) => {
     );
 
     res.json({
-  message: "Login successful",
-  fullname: user.fullname,
-  email: user.email,   // add this
-  role: user.role,
-  token
-});
-
+      message: "Login successful",
+      fullname: user.fullname,
+      email: user.email,
+      role: user.role,
+      token,
+    });
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ message: err.message });
   }
 });
 
-// Patients routes
+// Add patient
 app.post("/patients", async (req, res) => {
   try {
-    const { fullname, gender, age, bloodgroup, phone, address } = req.body;
-
+    const { fullname, gender, age, bloodgroup, phone, address, reason } = req.body;
     if (!fullname || !gender || !age) {
       return res.status(400).json({ message: "Fullname, gender, and age are required" });
     }
 
     await db.query(
-      "INSERT INTO patients (fullname, gender, age, bloodgroup, phone, address) VALUES (?, ?, ?, ?, ?, ?)",
-      [fullname, gender, age, bloodgroup || null, phone || null, address || null]
+      "INSERT INTO patients (fullname, gender, age, bloodgroup, phone, address, reason) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [fullname, gender, age, bloodgroup || null, phone || null, address || null, reason || null]
     );
 
     res.status(201).json({ message: "Patient added successfully" });
@@ -103,6 +100,7 @@ app.post("/patients", async (req, res) => {
   }
 });
 
+// Get patients
 app.get("/patients", async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM patients ORDER BY id DESC");
@@ -113,16 +111,14 @@ app.get("/patients", async (req, res) => {
   }
 });
 
-// Delete Patient route
+
 app.delete("/patients/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const [result] = await db.query("DELETE FROM patients WHERE id = ?", [id]);
-
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Patient not found" });
     }
-
     res.json({ message: "Patient deleted successfully" });
   } catch (err) {
     console.error("Error deleting patient:", err.message);
@@ -138,19 +134,18 @@ app.post("/appointments", async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if slot already taken
+    // Fix: check both date and time
     const [existing] = await db.query(
-      "SELECT * FROM appointments WHERE date = ? AND time = ?",
+      "SELECT * FROM appointments WHERE date = ? AND time = ? AND status = 'Scheduled'",
       [date, time]
     );
     if (existing.length > 0) {
       return res.status(409).json({ message: "This slot is already taken" });
     }
 
-    // Insert new appointment with phone + email
     await db.query(
-      "INSERT INTO appointments (patientName, phone, email, date, time, reason) VALUES (?, ?, ?, ?, ?, ?)",
-      [patientName, phone, email, date, time, reason]
+      "INSERT INTO appointments (patientName, phone, email, date, time, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [patientName, phone, email, date, time, reason, "Scheduled"]
     );
 
     res.status(201).json({ message: "Appointment added successfully" });
@@ -159,11 +154,14 @@ app.post("/appointments", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-//  This is the GET route you asked about
+
+
+// Appointments routes
 app.get("/appointments", async (req, res) => {
   try {
+    // Remove the WHERE status = 'Scheduled' filter
     const [rows] = await db.query(
-      "SELECT id, patientName, phone, email, date, time, reason FROM appointments ORDER BY date ASC"
+      "SELECT id, patientName, phone, email, date, time, reason, status FROM appointments ORDER BY date ASC"
     );
     res.json(rows);
   } catch (err) {
@@ -172,11 +170,15 @@ app.get("/appointments", async (req, res) => {
   }
 });
 
-// Cancel Appointment route
-app.delete("/appointments/:id", async (req, res) => {
+
+// Cancel Appointment (update status)
+app.put("/appointments/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query("DELETE FROM appointments WHERE id = ?", [id]);
+    const [result] = await db.query("UPDATE appointments SET status = ? WHERE id = ?", [
+      "Cancelled",
+      id,
+    ]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Appointment not found" });
@@ -185,9 +187,36 @@ app.delete("/appointments/:id", async (req, res) => {
     res.json({ message: "Appointment cancelled successfully" });
   } catch (err) {
     console.error("Error cancelling appointment:", err.message);
+    res.status(500).json({ message: "Server error while cancelling appointment" });
+  }
+});
+
+// Count today's scheduled appointments
+app.get("/appointments/today", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT COUNT(*) AS count FROM appointments WHERE DATE(date) = CURDATE() AND status = 'Scheduled'"
+    );
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    console.error("Error fetching today's appointments:", err.message);
     res.status(500).json({ message: err.message });
   }
 });
+
+// Count cancelled appointments
+app.get("/appointments/cancelled", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT COUNT(*) AS count FROM appointments WHERE status = 'Cancelled'"
+    );
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    console.error("Error fetching cancelled appointments:", err.message);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 
 // Start server
 app.listen(process.env.PORT || 5001, () =>
