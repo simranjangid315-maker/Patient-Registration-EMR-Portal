@@ -23,7 +23,7 @@ export default function Login() {
     try {
       const res = await API.post("/auth/login", form);
 
-      // ✅ Store token, fullname, email, and role
+      // Store token, fullname, email, and role
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("fullname", res.data.fullname);
       localStorage.setItem("patientEmail", res.data.email); // fixed: use res.data
@@ -31,7 +31,7 @@ export default function Login() {
 
       alert("Login Successful");
 
-      // ✅ Role-based redirect
+      // Role-based redirect
       if (res.data.role === "admin") {
         navigate("/home");
       } else {
@@ -44,7 +44,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-gray-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 to-gray-900 text-white p-6">
+      
+      {/* Welcome message outside the card */}
+      <h1 className="text-2xl font-semibold text-purple-300 mb-2">
+        🔐 Welcome Back
+      </h1>
+      <p className="text-gray-400 mb-6">
+        Please login to continue
+      </p>
+
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-purple-300 mb-6 text-center">
           Login
@@ -56,7 +65,8 @@ export default function Login() {
             name="email"
             placeholder="Email"
             onChange={handleChange}
-            className="w-full p-3 mb-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-3 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
 
           <input
@@ -64,7 +74,8 @@ export default function Login() {
             name="password"
             placeholder="Password"
             onChange={handleChange}
-            className="w-full p-3 mb-4 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-4 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            required
           />
 
           <button className="bg-purple-600 hover:bg-purple-700 text-white w-full p-3 rounded">
