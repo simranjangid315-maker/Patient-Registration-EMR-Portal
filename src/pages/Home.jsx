@@ -30,12 +30,41 @@ export default function Home() {
 
   const totalPatients = patients.length;
 
-  // Today's date string (YYYY-MM-DD)
-  const today = new Date().toISOString().split("T")[0];
-  const appointmentsToday = appointments.filter((a) => a.date === today);
+  // Today's date in YYYY-MM-DD
+  const today = new Date().toLocaleDateString("en-CA");
+
+  // Appointments Today = only those scheduled for today and still upcoming
+  const appointmentsToday = appointments.filter((a) => {
+    const apptDate = new Date(a.date).toLocaleDateString("en-CA");
+    if (apptDate !== today) return false;
+    if (a.status?.trim().toLowerCase() === "cancelled") return false;
+
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 8); // HH:MM:SS
+    const apptTime = a.time.length === 5 ? a.time + ":00" : a.time;
+    return apptTime >= currentTime;
+  });
 
   // Cancelled appointments
-  const cancelledAppointments = appointments.filter((a) => a.status === "Cancelled");
+  const cancelledAppointments = appointments.filter(
+    (a) => a.status && a.status.trim().toLowerCase() === "cancelled"
+  );
+
+  // Upcoming appointments = today (future times) or future dates, not cancelled
+  const upcomingAppointments = appointments.filter((a) => {
+    const apptDate = new Date(a.date).toLocaleDateString("en-CA");
+    if (a.status?.trim().toLowerCase() === "cancelled") return false;
+
+    if (apptDate > today) {
+      return true; // future date
+    } else if (apptDate === today) {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 8);
+      const apptTime = a.time.length === 5 ? a.time + ":00" : a.time;
+      return apptTime >= currentTime;
+    }
+    return false; // past date
+  });
 
   // Recent patients (last 5 added)
   const recentPatients = patients.slice(-5).reverse();
@@ -72,38 +101,42 @@ export default function Home() {
           </div>
 
           {/* Upcoming Appointments Box */}
-<div className="bg-[#2e2e4f] rounded-xl p-8 shadow-lg hover:shadow-purple-500/30 transition text-center w-96 h-80 flex flex-col">
-  <h3 className="text-xl font-semibold text-purple-400 mb-4 flex items-center justify-center gap-2">
-    🗓️ Upcoming Appointments
-  </h3>
+          <div className="bg-[#2e2e4f] rounded-xl p-8 shadow-lg hover:shadow-purple-500/30 transition text-center w-96 h-80 flex flex-col">
+            <h3 className="text-xl font-semibold text-purple-400 mb-4 flex items-center justify-center gap-2">
+              🗓️ Upcoming Appointments
+            </h3>
 
-  <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-[#1a1a2e]">
-    {appointments.length === 0 ? (
-      <p className="text-gray-400 italic">No upcoming appointments</p>
-    ) : (
-      <ul className="space-y-3 text-gray-300">
-        {appointments.slice(0, 10).map((appt) => (
-          <li
-            key={appt.id}
-            className="p-3 rounded bg-[#1a1a2e] hover:bg-[#24243e] transition"
-          >
-            <p className="font-bold text-purple-300">{appt.patientName}</p>
-            <p>
-              {new Date(appt.date).toLocaleDateString("en-IN", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric"
-              })} • {appt.time}
-            </p>
-            <p className="text-sm text-gray-400">{appt.reason}</p>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-</div>
-
+            <div className="overflow-y-auto flex-1 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-[#1a1a2e]">
+              {upcomingAppointments.length === 0 ? (
+                <p className="text-gray-400 italic">No upcoming appointments</p>
+              ) : (
+                <ul className="space-y-3 text-gray-300">
+                  {upcomingAppointments.slice(0, 10).map((appt) => {
+                    const formattedDate = new Date(appt.date).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric"
+                    });
+                    const formattedTime = new Date(`1970-01-01T${appt.time}`).toLocaleTimeString("en-GB", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true
+                    });
+                    return (
+                      <li
+                        key={appt.id}
+                        className="p-3 rounded bg-[#1a1a2e] hover:bg-[#24243e] transition"
+                      >
+                        <p className="font-bold text-purple-300">{appt.patientName}</p>
+                        <p>{formattedDate} {formattedTime}</p>
+                        <p className="text-sm text-gray-400">{appt.reason}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
 
           {/* Appointments Today */}
           <div className="bg-[#2e2e4f] rounded-xl p-8 text-center shadow-lg hover:shadow-purple-500/30 transition flex flex-col justify-center">
@@ -111,12 +144,6 @@ export default function Home() {
               ⚡ Appointments Today
             </h3>
             <p className="text-5xl font-bold text-purple-300">{appointmentsToday.length}</p>
-            <button
-              onClick={() => navigate("/appointments")}
-              className="mt-4 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded"
-            >
-              View All
-            </button>
           </div>
 
           {/* Cancelled Appointments */}
