@@ -43,9 +43,9 @@ export default function Patients() {
   const cancelAppointment = async (id) => {
     if (!window.confirm("Cancel this appointment?")) return;
     try {
-      await API.delete(`/appointments/${id}`);
+      await API.put(`/appointments/${id}`, { status: "Cancelled" });
+      fetchData(); // refresh data
       alert("Appointment cancelled successfully");
-      fetchData(); // refresh both patients + appointments
     } catch (err) {
       console.error("Error cancelling appointment:", err);
       alert("Failed to cancel appointment");
@@ -63,6 +63,7 @@ export default function Patients() {
         {/* Patients List */}
         <h1 className="text-3xl font-bold mb-6 text-purple-400">Patients List</h1>
 
+        {/* ✅ Single Search Bar */}
         <input
           className="border border-purple-500 p-2 w-full mb-4 rounded bg-[#2e2e4f] text-white"
           placeholder="Search patient..."
@@ -74,22 +75,28 @@ export default function Patients() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-purple-700 text-white">
               <tr>
-                <th className="p-4">Name</th>
+                <th className="p-4">S.No</th> {/* ✅ New column */}
+                <th>Name</th>
                 <th>Gender</th>
                 <th>Age</th>
                 <th>Blood Group</th>
                 <th>Phone</th>
+                <th>Address</th>
+                <th>Reason</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {filteredPatients.map((p) => (
+              {filteredPatients.map((p, index) => (
                 <tr key={p.id} className="border-b hover:bg-purple-900">
-                  <td className="p-4">{p.fullname}</td>
+                  <td className="p-4">{index + 1}</td> {/* ✅ Serial number */}
+                  <td>{p.fullname}</td>
                   <td>{p.gender}</td>
                   <td>{p.age}</td>
                   <td>{p.bloodgroup}</td>
                   <td>{p.phone}</td>
+                  <td>{p.address}</td>
+                  <td>{p.reason}</td>
                   <td>
                     <button
                       className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
@@ -106,45 +113,83 @@ export default function Patients() {
 
         {/* Appointments List */}
         <h1 className="text-3xl font-bold mb-6 text-purple-400">Appointments List</h1>
+
         <div className="bg-[#2e2e4f] shadow-lg rounded-xl overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead className="bg-purple-700 text-white">
               <tr>
-                <th className="p-4">Patient Name</th>
+                <th className="p-4">S.No</th> {/* ✅ New column */}
+                <th>Patient Name</th>
                 <th>Date</th>
                 <th>Day</th>
                 <th>Time</th>
                 <th>Reason</th>
-                <th>Phone</th>   {/* New */}
-                <th>Email</th>   {/* New */}
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
-              {appointments.map((a) => {
-                const dayName = new Date(a.date).toLocaleDateString("en-US", {
-                  weekday: "long",
-                });
-                return (
-                  <tr key={a.id} className="border-b hover:bg-purple-900">
-                    <td className="p-4">{a.patientName}</td>
-                    <td>{a.date}</td>
-                    <td>{dayName}</td>
-                    <td>{a.time}</td>
-                    <td>{a.reason}</td>
-                    <td>{a.phone}</td>   {/* New */}
-                    <td>{a.email}</td>   {/* New */}
-                    <td>
-                      <button
-                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                        onClick={() => cancelAppointment(a.id)}
-                      >
-                        Cancel
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {appointments
+                .filter((a) => {
+                  const today = new Date().toLocaleDateString("en-CA");
+                  const apptDate = new Date(a.date).toLocaleDateString("en-CA");
+                  const now = new Date();
+                  const currentTime = now.toTimeString().slice(0, 8);
+                  const apptTime = a.time.length === 5 ? a.time + ":00" : a.time;
+
+                  const isPastDate = apptDate < today;
+                  const isPastTime = apptDate === today && apptTime < currentTime;
+
+                  let status = a.status || "Scheduled";
+                  if ((isPastDate || isPastTime) && status.trim().toLowerCase() !== "cancelled") {
+                    status = "Completed";
+                  }
+
+                  if (!search) {
+                    return status.toLowerCase() === "scheduled";
+                  } else {
+                    return a.patientName.toLowerCase().includes(search.toLowerCase());
+                  }
+                })
+                .map((a, index) => {
+                  const dayName = new Date(a.date).toLocaleDateString("en-US", { weekday: "long" });
+                  const formattedDate = new Date(a.date).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  });
+                  const formattedTime = new Date(`1970-01-01T${a.time}`).toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  });
+
+                  return (
+                    <tr key={a.id} className="border-b hover:bg-purple-900">
+                      <td className="p-4">{index + 1}</td> {/* ✅ Serial number */}
+                      <td>{a.patientName}</td>
+                      <td>{formattedDate}</td>
+                      <td>{dayName}</td>
+                      <td>{formattedTime}</td>
+                      <td>{a.reason}</td>
+                      <td>{a.phone}</td>
+                      <td>{a.email}</td>
+                      <td>{a.status}</td>
+                      <td>
+                        {a.status.trim().toLowerCase() === "scheduled" && (
+                          <button
+                            className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                            onClick={() => cancelAppointment(a.id)}
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
