@@ -9,7 +9,7 @@ export default function Signup() {
     fullname: "",
     email: "",
     password: "",
-    role: "patient"   //  default to patient
+    role: "patient"   // default to patient
   });
 
   const handleChange = (e) => {
@@ -33,7 +33,16 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 to-gray-900">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-900 to-gray-900 text-white p-6">
+      
+      {/* Welcome message outside the card */}
+      <h1 className="text-2xl font-semibold text-purple-300 mb-2">
+        👋 Welcome to Patient EMR Portal
+      </h1>
+      <p className="text-gray-400 mb-6">
+        Create your account to get started
+      </p>
+
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
         <h2 className="text-3xl font-bold text-purple-300 text-center mb-6">
           Sign Up
@@ -46,7 +55,7 @@ export default function Signup() {
             placeholder="Full Name"
             value={form.fullname}
             onChange={handleChange}
-            className="w-full p-3 mb-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-3 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             required
           />
 
@@ -56,7 +65,7 @@ export default function Signup() {
             placeholder="Email"
             value={form.email}
             onChange={handleChange}
-            className="w-full p-3 mb-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-3 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             required
           />
 
@@ -66,7 +75,7 @@ export default function Signup() {
             placeholder="Password"
             value={form.password}
             onChange={handleChange}
-            className="w-full p-3 mb-4 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-4 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             required
           />
 
@@ -75,7 +84,7 @@ export default function Signup() {
             name="role"
             value={form.role}
             onChange={handleChange}
-            className="w-full p-3 mb-4 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full p-3 mb-4 rounded bg-[#1a1a2e] text-white border border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="patient">Patient</option>
             <option value="admin">Admin</option>
