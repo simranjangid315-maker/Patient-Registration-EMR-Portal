@@ -77,7 +77,7 @@ export default function MyAppointments() {
 
       {/* Appointments Section */}
       <div className="p-6">
-        <div className="max-w-3xl mx-auto bg-gray-800 rounded-lg shadow-lg p-6">
+        <div className="max-w-5xl mx-auto bg-gray-800 rounded-lg shadow-lg p-6">
           <h2 className="text-2xl font-bold text-purple-300 mb-6 text-center">
             My Appointments
           </h2>
@@ -87,46 +87,52 @@ export default function MyAppointments() {
               You have no upcoming appointments.
             </p>
           ) : (
-            <table className="w-full text-left border-collapse text-gray-300">
-              <thead className="bg-purple-700 text-white">
-                <tr>
-                  <th className="p-3">Patient Name</th>
-                  <th>Date</th>
-                  <th>Day</th>
-                  <th>Time</th>
-                  <th>Reason</th>
-                  <th>Phone</th>
-                  <th>Email</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appt) => {
-                  const dayName = new Date(appt.date).toLocaleDateString("en-US", {
-                    weekday: "long",
-                  });
-                  return (
-                    <tr key={appt.id} className="border-b border-gray-700">
-                      <td className="p-3">{appt.patientName}</td>
-                      <td>{appt.date}</td>
-                      <td>{dayName}</td>
-                      <td>{appt.time}</td>
-                      <td>{appt.reason}</td>
-                      <td>{appt.phone}</td>
-                      <td>{appt.email}</td>
-                      <td>
-                        <button
-                          onClick={() => cancelAppointment(appt.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-                        >
-                          Cancel
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="min-w-full border border-purple-500 rounded-lg text-gray-300">
+                <thead className="bg-purple-700 text-white">
+                  <tr>
+                    <th className="px-4 py-2 text-left">Patient Name</th>
+                    <th className="px-4 py-2 text-left">Date</th>
+                    <th className="px-4 py-2 text-left">Day</th>
+                    <th className="px-4 py-2 text-left">Time</th>
+                    <th className="px-4 py-2 text-left">Reason</th>
+                    <th className="px-4 py-2 text-left">Phone</th>
+                    <th className="px-4 py-2 text-left">Email</th>
+                    <th className="px-4 py-2 text-left">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                  {appointments.map((appt) => {
+                    const dayName = new Date(appt.date).toLocaleDateString(
+                      "en-US",
+                      { weekday: "long" }
+                    );
+                    return (
+                      <tr
+                        key={appt.id}
+                        className="odd:bg-[#1a1a2e] even:bg-[#2e2e4f]"
+                      >
+                        <td className="px-4 py-2">{appt.patientName}</td>
+                        <td className="px-4 py-2">{appt.date}</td>
+                        <td className="px-4 py-2">{dayName}</td>
+                        <td className="px-4 py-2">{appt.time}</td>
+                        <td className="px-4 py-2">{appt.reason}</td>
+                        <td className="px-4 py-2">{appt.phone}</td>
+                        <td className="px-4 py-2">{appt.email}</td>
+                        <td className="px-4 py-2">
+                          <button
+                            onClick={() => cancelAppointment(appt.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                          >
+                            Cancel
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
