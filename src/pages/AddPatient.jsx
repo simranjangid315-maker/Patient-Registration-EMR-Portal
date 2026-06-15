@@ -11,18 +11,51 @@ export default function AddPatient() {
     age: "",
     bloodgroup: "",
     phone: "",
-    address: ""
+    address: "",
+    reason: ""   // new field
   });
 
   const [suggestions, setSuggestions] = useState([]);
 
-  // City list (expand as needed)
+  // City + State list
   const cities = [
-    "Hyderabad","Secunderabad","Quthbullapur","Kukatpally","Gachibowli","Miyapur","LB Nagar","Begumpet",
-    "Warangal","Karimnagar","Nizamabad","Khammam","Mahbubnagar","Adilabad","Sangareddy","Medchal","Ranga Reddy",
-    "Vijayawada","Visakhapatnam","Tirupati","Chennai","Bengaluru","Mumbai","Delhi","Kolkata","Pune","Nagpur",
-    "Aurangabad","Coimbatore","Madurai","Lucknow","Kanpur","Agra","Jaipur","Bhopal","Indore","Patna","Ranchi",
-    "Raipur","Chandigarh","Amritsar","Shimla","Dehradun","Noida","Gurgaon"
+    "Hyderabad, Telangana",
+    "Secunderabad, Telangana",
+    "Warangal, Telangana",
+    "Karimnagar, Telangana",
+    "Nizamabad, Telangana",
+    "Khammam, Telangana",
+    "Mahbubnagar, Telangana",
+    "Adilabad, Telangana",
+    "Sangareddy, Telangana",
+    "Vijayawada, Andhra Pradesh",
+    "Visakhapatnam, Andhra Pradesh",
+    "Tirupati, Andhra Pradesh",
+    "Chennai, Tamil Nadu",
+    "Bengaluru, Karnataka",
+    "Mumbai, Maharashtra",
+    "Delhi, Delhi",
+    "Kolkata, West Bengal",
+    "Pune, Maharashtra",
+    "Nagpur, Maharashtra",
+    "Aurangabad, Maharashtra",
+    "Coimbatore, Tamil Nadu",
+    "Madurai, Tamil Nadu",
+    "Lucknow, Uttar Pradesh",
+    "Kanpur, Uttar Pradesh",
+    "Agra, Uttar Pradesh",
+    "Jaipur, Rajasthan",
+    "Bhopal, Madhya Pradesh",
+    "Indore, Madhya Pradesh",
+    "Patna, Bihar",
+    "Ranchi, Jharkhand",
+    "Raipur, Chhattisgarh",
+    "Chandigarh, Chandigarh",
+    "Amritsar, Punjab",
+    "Shimla, Himachal Pradesh",
+    "Dehradun, Uttarakhand",
+    "Noida, Uttar Pradesh",
+    "Gurgaon, Haryana"
   ];
 
   // Handle input changes
@@ -56,7 +89,6 @@ export default function AddPatient() {
       <Navbar />
       <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-6 text-white">
         
-        {/*Heading outside the form card */}
         <h1 className="text-3xl font-bold mb-6 text-purple-400">
           Add New Patient
         </h1>
@@ -115,12 +147,12 @@ export default function AddPatient() {
               required
             />
 
-            {/* Address with city autocomplete */}
+            {/* Address with city + state autocomplete */}
             <div className="relative">
               <input
                 type="text"
                 name="address"
-                placeholder="Enter City"
+                placeholder="Enter City, State"
                 className="w-full border border-purple-500 p-3 rounded bg-[#1a1a2e] text-white"
                 value={form.address}
                 onChange={handleChange}
@@ -144,6 +176,16 @@ export default function AddPatient() {
               )}
             </div>
 
+            {/* Reason field */}
+            <textarea
+              name="reason"
+              placeholder="Reason"
+              className="w-full border border-purple-500 p-3 rounded bg-[#1a1a2e] text-white"
+              value={form.reason}
+              onChange={handleChange}
+              rows="3"
+            />
+
             <button
               type="submit"
               className="btn w-full bg-purple-700 text-white py-3 rounded hover:bg-purple-800"
@@ -152,7 +194,6 @@ export default function AddPatient() {
             </button>
           </form>
 
-          {/* Back Button */}
           <button
             onClick={() => navigate("/home")}
             className="btn mt-6 w-full bg-purple-700 text-white py-2 rounded hover:bg-purple-800"
